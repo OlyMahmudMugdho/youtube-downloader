@@ -4,7 +4,6 @@ import com.mahmud.model.BrowserType;
 import com.mahmud.model.DownloadOption;
 import com.mahmud.model.DownloadProgress;
 import com.mahmud.service.DownloadService;
-import com.mahmud.service.YtDlpService;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -24,8 +23,10 @@ public class MainController implements Initializable {
     @FXML private TextField urlField;
     @FXML private CheckBox useCookiesCheckBox;
     @FXML private ComboBox<BrowserType> browserComboBox;
-    @FXML private Button fetchButton;
     @FXML private VBox formatOptionsContainer;
+    @FXML private RadioButton defaultRadio;
+    @FXML private RadioButton videoOnlyRadio;
+    @FXML private RadioButton audioOnlyRadio;
     @FXML private TextField downloadPathField;
     @FXML private Button browseButton;
     @FXML private Button downloadButton;
@@ -34,16 +35,21 @@ public class MainController implements Initializable {
     @FXML private Label statusLabel;
     @FXML private TextArea logArea;
     
-    private final YtDlpService ytDlpService = new YtDlpService();
     private final DownloadService downloadService = new DownloadService();
     private final List<CheckBox> formatCheckBoxes = new ArrayList<>();
     private List<DownloadOption> availableFormats = new ArrayList<>();
+    private List<DownloadOption> allPresetFormats = new ArrayList<>();
     private Task<Void> currentDownloadTask;
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupUI();
         setupEventHandlers();
+    // Populate presets immediately (no fetch button required)
+    populatePresets();
+    // Default selection
+    if (defaultRadio != null) defaultRadio.setSelected(true);
+    displayFilteredFormats();
     }
     
     private void setupUI() {
@@ -55,13 +61,19 @@ public class MainController implements Initializable {
         // Set default download path
         downloadPathField.setText(System.getProperty("user.home") + File.separator + "Downloads");
         
-        // Initially disable download button
+    // Initially disable download button
         downloadButton.setDisable(true);
         
         // Setup progress bar
         progressBar.setProgress(0);
         progressBar.setVisible(false);
         progressLabel.setVisible(false);
+
+    // Setup radio toggle group programmatically
+    javafx.scene.control.ToggleGroup tg = new javafx.scene.control.ToggleGroup();
+    if (defaultRadio != null) defaultRadio.setToggleGroup(tg);
+    if (videoOnlyRadio != null) videoOnlyRadio.setToggleGroup(tg);
+    if (audioOnlyRadio != null) audioOnlyRadio.setToggleGroup(tg);
     }
     
     private void setupEventHandlers() {
@@ -69,8 +81,10 @@ public class MainController implements Initializable {
         useCookiesCheckBox.setOnAction(e -> 
             browserComboBox.setDisable(!useCookiesCheckBox.isSelected()));
         
-        // Fetch button action
-        fetchButton.setOnAction(e -> fetchFormats());
+    // Radio button actions: filter formats on change
+    if (defaultRadio != null) defaultRadio.setOnAction(e -> displayFilteredFormats());
+    if (videoOnlyRadio != null) videoOnlyRadio.setOnAction(e -> displayFilteredFormats());
+    if (audioOnlyRadio != null) audioOnlyRadio.setOnAction(e -> displayFilteredFormats());
         
         // Browse button action
         browseButton.setOnAction(e -> browseDownloadLocation());
@@ -84,29 +98,58 @@ public class MainController implements Initializable {
     
     @FXML
     private void fetchFormats() {
-        String url = urlField.getText().trim();
-        if (url.isEmpty()) {
-            showAlert("Error", "Please enter a valid YouTube URL");
-            return;
+        // kept for compatibility with Enter key on URL field — but formats are preset
+        // simply refresh the displayed formats based on current radio selection
+        displayFilteredFormats();
+    }
+
+    private void populatePresets() {
+        allPresetFormats.clear();
+        // Default (video+audio)
+        allPresetFormats.add(new DownloadOption("best[height<=360]", "mp4", "360p", null, "360p (video+audio)"));
+        allPresetFormats.add(new DownloadOption("best[height<=480]", "mp4", "480p", null, "480p (video+audio)"));
+        allPresetFormats.add(new DownloadOption("best[height<=720]", "mp4", "720p", null, "720p (video+audio)"));
+        allPresetFormats.add(new DownloadOption("best[height<=1080]", "mp4", "1080p", null, "1080p (video+audio)"));
+
+        // Video only
+        allPresetFormats.add(new DownloadOption("bestvideo[height<=360]", "mp4", "360p", null, "360p (video only)"));
+        allPresetFormats.add(new DownloadOption("bestvideo[height<=480]", "mp4", "480p", null, "480p (video only)"));
+        allPresetFormats.add(new DownloadOption("bestvideo[height<=720]", "mp4", "720p", null, "720p (video only)"));
+        allPresetFormats.add(new DownloadOption("bestvideo[height<=1080]", "mp4", "1080p", null, "1080p (video only)"));
+
+        // Audio only
+        allPresetFormats.add(new DownloadOption("bestaudio", "mp3", "audio only", null, "Best audio (mp3)"));
+        allPresetFormats.add(new DownloadOption("bestaudio[abr<=128]", "mp3", "audio only", null, "Audio 128kbps (mp3)"));
+        allPresetFormats.add(new DownloadOption("bestaudio[abr<=64]", "m4a", "audio only", null, "Audio 64kbps (m4a)"));
+    }
+
+    private void displayFilteredFormats() {
+        List<DownloadOption> filtered = new ArrayList<>();
+        if (defaultRadio != null && defaultRadio.isSelected()) {
+            for (DownloadOption o : allPresetFormats) {
+                if (!o.getResolution().equalsIgnoreCase("audio only") && !o.getDescription().toLowerCase().contains("video only")) {
+                    // include those marked as video+audio
+                    if (o.getDescription().toLowerCase().contains("video+audio") || o.getDescription().toLowerCase().contains("video (video+audio)") || o.getDescription().toLowerCase().contains("(video+audio)") || o.getFormatId().startsWith("best[")) {
+                        filtered.add(o);
+                    }
+                }
+            }
+        } else if (videoOnlyRadio != null && videoOnlyRadio.isSelected()) {
+            for (DownloadOption o : allPresetFormats) {
+                if (o.getDescription().toLowerCase().contains("video only") || o.getFormatId().startsWith("bestvideo")) {
+                    filtered.add(o);
+                }
+            }
+        } else if (audioOnlyRadio != null && audioOnlyRadio.isSelected()) {
+            for (DownloadOption o : allPresetFormats) {
+                if (o.getResolution().equalsIgnoreCase("audio only") || o.getDescription().toLowerCase().contains("audio")) {
+                    filtered.add(o);
+                }
+            }
         }
 
-        // Instead of querying yt-dlp for available formats, provide common presets
-        fetchButton.setDisable(true);
-        statusLabel.setText("Preparing formats...");
-        formatOptionsContainer.getChildren().clear();
-        formatCheckBoxes.clear();
-        downloadButton.setDisable(true);
-
-        List<DownloadOption> presets = new ArrayList<>();
-        presets.add(new DownloadOption("best[height<=360]", "mp4", "360p", null, "360p (video+audio)"));
-        presets.add(new DownloadOption("best[height<=480]", "mp4", "480p", null, "480p (video+audio)"));
-        presets.add(new DownloadOption("best[height<=720]", "mp4", "720p", null, "720p (video+audio)"));
-        presets.add(new DownloadOption("best[height<=1080]", "mp4", "1080p", null, "1080p (video+audio)"));
-
-        availableFormats = presets;
+        availableFormats = filtered;
         displayFormats(availableFormats);
-        fetchButton.setDisable(false);
-        statusLabel.setText("Formats ready");
     }
     
     private void displayFormats(List<DownloadOption> formats) {
@@ -291,7 +334,7 @@ public class MainController implements Initializable {
         urlField.setDisable(!enabled);
         useCookiesCheckBox.setDisable(!enabled);
         browserComboBox.setDisable(!enabled || !useCookiesCheckBox.isSelected());
-        fetchButton.setDisable(!enabled);
+    // fetchButton was removed; no-op
         downloadPathField.setDisable(!enabled);
         browseButton.setDisable(!enabled);
         downloadButton.setDisable(!enabled);

@@ -75,18 +75,52 @@ public class DownloadService {
                                             BrowserType browserType) {
         List<String> command = new ArrayList<>();
         command.add("yt-dlp");
-        command.add("-f");
-        command.add(option.getFormatId());
+        // If option requests a max height (e.g. best[height<=1080] or bestvideo[height<=1080])
+        // convert to a sorting preference using -S so yt-dlp will prefer the target resolution.
+        String fmt = option.getFormatId();
+    if (fmt != null && fmt.contains("height<=")) {
+            // extract number
+            try {
+                int idx = fmt.indexOf("height<=") + "height<=".length();
+                String rest = fmt.substring(idx).replaceAll("[^0-9].*$", "");
+                int target = Integer.parseInt(rest);
+                // prefer exact resolution and higher fps
+                command.add("-S");
+                command.add("res:" + target + ",fps");
+            } catch (Exception ignored) {
+                // fall back to no sorting
+            }
+        }
+
+        // Use combined format selector to merge best video and audio when possible
+        if (fmt != null && fmt.startsWith("bestvideo")) {
+            // video-only requested: select bestvideo up to the target + no audio
+            command.add("-f");
+            command.add(fmt + "+bestaudio/best");
+        } else if (fmt != null && fmt.startsWith("best[")) {
+            // default (video+audio) preset
+            command.add("-f");
+            command.add("bestvideo+bestaudio/best");
+        } else {
+            // fallback to whatever format id present
+            command.add("-f");
+            command.add(fmt != null && !fmt.isEmpty() ? fmt : "best");
+        }
         command.add("-o");
         command.add(new File(downloadPath, "%(title)s.%(ext)s").getAbsolutePath());
         
-        if (useCookies && browserType != null) {
+    if (useCookies && browserType != null) {
             command.add("--cookies-from-browser");
             command.add(browserType.getValue());
         }
         
-        command.add("--progress");
-        command.add(url);
+    // Ensure progress lines are emitted
+    command.add("--newline");
+
+    // Prefer mp4 container when merging
+    command.add("--merge-output-format");
+    command.add("mp4");
+    command.add(url);
         
         return command;
     }

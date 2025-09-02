@@ -24,7 +24,7 @@ public class DownloadOption {
     
     @Override
     public String toString() {
-        return String.format("%s - %s (%s)", description, resolution, 
-                           filesize != null ? filesize : "Unknown size");
+        return String.format("%s - %s %s", description, resolution, 
+                           filesize != null ? filesize : "");
     }
 }

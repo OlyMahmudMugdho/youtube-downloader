@@ -16,7 +16,6 @@
             <Label text="YouTube Video URL:" />
             <HBox spacing="10.0">
                <TextField fx:id="urlField" promptText="Enter YouTube video URL..." HBox.hgrow="ALWAYS" />
-               <Button fx:id="fetchButton" text="Fetch Formats" />
             </HBox>
          </VBox>
          
@@ -26,6 +25,13 @@
             <HBox spacing="10.0">
                <CheckBox fx:id="useCookiesCheckBox" text="Use browser cookies" />
                <ComboBox fx:id="browserComboBox" promptText="Select browser..." />
+            </HBox>
+            <!-- Selection Type -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+               <Label text="Type:" />
+               <RadioButton fx:id="defaultRadio" text="Default (video+audio)" />
+               <RadioButton fx:id="videoOnlyRadio" text="Video only" />
+               <RadioButton fx:id="audioOnlyRadio" text="Audio only" />
             </HBox>
          </VBox>
          
