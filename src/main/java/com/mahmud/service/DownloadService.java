@@ -92,19 +92,34 @@ public class DownloadService {
             }
         }
 
-        // Use combined format selector to merge best video and audio when possible
-        if (fmt != null && fmt.startsWith("bestvideo")) {
-            // video-only requested: select bestvideo up to the target + no audio
+    // Decide how to download based on the format id and option type
+    // Be careful: descriptions like "360p (video+audio)" contain the word "audio" but are not audio-only.
+    boolean isAudioOnly = (option.getResolution() != null && option.getResolution().equalsIgnoreCase("audio only"))
+        || (option.getDescription() != null && option.getDescription().toLowerCase().contains("audio only"))
+        || (fmt != null && (fmt.startsWith("bestaudio") || fmt.equalsIgnoreCase("bestaudio")));
+
+        if (isAudioOnly) {
+            // Audio-only: request best audio and extract to mp3
             command.add("-f");
-            command.add(fmt + "+bestaudio/best");
-        } else if (fmt != null && fmt.startsWith("best[")) {
-            // default (video+audio) preset
+            command.add(fmt != null && !fmt.isEmpty() ? fmt : "bestaudio");
+            // extract audio and convert to mp3 so extension matches
+            command.add("-x");
+            command.add("--audio-format");
+            command.add("mp3");
+            // best quality for audio
+            command.add("--audio-quality");
+            command.add("0");
+        } else if (fmt != null && fmt.startsWith("bestvideo")) {
+            // Video-only: download video stream only (no audio)
+            command.add("-f");
+            command.add(fmt);
+            // when only video is downloaded, output may be e.g. webm; let user handle postprocessing
+        } else {
+            // Default (video+audio): prefer best video + best audio and merge into mp4
             command.add("-f");
             command.add("bestvideo+bestaudio/best");
-        } else {
-            // fallback to whatever format id present
-            command.add("-f");
-            command.add(fmt != null && !fmt.isEmpty() ? fmt : "best");
+            command.add("--merge-output-format");
+            command.add("mp4");
         }
         command.add("-o");
         command.add(new File(downloadPath, "%(title)s.%(ext)s").getAbsolutePath());
@@ -117,9 +132,6 @@ public class DownloadService {
     // Ensure progress lines are emitted
     command.add("--newline");
 
-    // Prefer mp4 container when merging
-    command.add("--merge-output-format");
-    command.add("mp4");
     command.add(url);
         
         return command;
