@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.mahmud.controller.MainController">
+   <top>
+      <VBox spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         
+         <!-- URL Input Section -->
+         <VBox spacing="5.0">
+            <Label text="YouTube Video URL:" />
+            <HBox spacing="10.0">
+               <TextField fx:id="urlField" promptText="Enter YouTube video URL..." HBox.hgrow="ALWAYS" />
+               <Button fx:id="fetchButton" text="Fetch Formats" />
+            </HBox>
+         </VBox>
+         
+         <!-- Cookie Options Section -->
+         <VBox spacing="5.0">
+            <Label text="Browser Cookies (Optional):" />
+            <HBox spacing="10.0">
+               <CheckBox fx:id="useCookiesCheckBox" text="Use browser cookies" />
+               <ComboBox fx:id="browserComboBox" promptText="Select browser..." />
+            </HBox>
+         </VBox>
+         
+         <!-- Download Location Section -->
+         <VBox spacing="5.0">
+            <Label text="Download Location:" />
+            <HBox spacing="10.0">
+               <TextField fx:id="downloadPathField" promptText="Select download folder..." HBox.hgrow="ALWAYS" />
+               <Button fx:id="browseButton" text="Browse" />
+            </HBox>
+         </VBox>
+         
+         <Separator />
+      </VBox>
+   </top>
+   
+   <center>
+      <VBox spacing="10.0">
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+         
+         <!-- Format Selection Section -->
+         <VBox spacing="5.0">
+            <Label text="Available Formats:" />
+            <ScrollPane fitToWidth="true" maxHeight="200.0" minHeight="100.0">
+               <VBox fx:id="formatOptionsContainer" spacing="5.0">
+                  <padding>
+                     <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                  </padding>
+               </VBox>
+            </ScrollPane>
+         </VBox>
+         
+         <!-- Download Controls -->
+         <HBox spacing="10.0" alignment="CENTER_LEFT">
+            <Button fx:id="downloadButton" text="Download" />
+            <Button onAction="#cancelDownload" text="Cancel" />
+         </HBox>
+         
+         <!-- Progress Section -->
+         <VBox spacing="5.0">
+            <ProgressBar fx:id="progressBar" maxWidth="Infinity" />
+            <Label fx:id="progressLabel" text="" />
+         </VBox>
+         
+         <!-- Status and Log Section -->
+         <VBox spacing="5.0" VBox.vgrow="ALWAYS">
+            <Label text="Status:" />
+            <Label fx:id="statusLabel" text="Ready" />
+            <Label text="Download Log:" />
+            <TextArea fx:id="logArea" editable="false" VBox.vgrow="ALWAYS" />
+         </VBox>
+      </VBox>
+   </center>
+</BorderPane>
