@@ -30,7 +30,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
             mkdir -p artifacts
-            zip -r artifacts/build-${{ matrix.os }}.zip ./target/*
+            zip -r artifacts/build-${{ matrix.os }}.zip ./target/target
 
       - name: Create archive (Windows)
         if: runner.os == 'Windows'
