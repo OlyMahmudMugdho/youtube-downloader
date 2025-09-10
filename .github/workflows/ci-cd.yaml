@@ -35,19 +35,6 @@ jobs:
       - name: Build Executables
         run: go build
 
-    #   - name: Create archive (Linux)
-    #     if: runner.os == 'Linux'
-    #     run: |
-    #         mkdir -p artifacts
-    #         zip -r artifacts/build-${{ matrix.os }}.zip target/
-
-    #   - name: Create archive (Windows)
-    #     if: runner.os == 'Windows'
-    #     run: |
-    #         mkdir artifacts
-    #         Get-ChildItem -Path ./target -Exclude artifacts | Compress-Archive -DestinationPath artifacts\build-${{ matrix.os }}.zip
-
-
       - name: Release artifacts
         if: ${{ github.ref_type == 'tag' }}
         uses: softprops/action-gh-release@v2
