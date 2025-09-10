@@ -26,6 +26,10 @@ jobs:
             - name: Package using jlink
               run: mvn javafx:jlink
             
-            - name: List files
-              run: ls target/image/bin
+            - name: release jar
+              if: ${{ startsWith(github.ref, 'refs/tags/') }}
+              uses: softprops/action-gh-release@v2
+              with:
+                    files: ./target
+                    token: ${{ secrets.GITHUB_TOKEN }}
 
