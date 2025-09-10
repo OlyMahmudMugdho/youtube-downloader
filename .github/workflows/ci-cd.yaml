@@ -36,7 +36,8 @@ jobs:
         if: runner.os == 'Windows'
         run: |
             mkdir artifacts
-            Compress-Archive -Path * -DestinationPath artifacts\build-${{ matrix.os }}.zip
+            Get-ChildItem -Path . -Exclude artifacts | Compress-Archive -DestinationPath artifacts\build-${{ matrix.os }}.zip
+
 
       - name: Release artifacts
         if: ${{ github.ref_type == 'tag' }}
