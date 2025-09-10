@@ -26,14 +26,24 @@ jobs:
       - name: Package using jlink
         run: mvn javafx:jlink
 
-      - name: Create archive
-        run: |
-          mkdir -p artifacts
-          zip -r artifacts/build-${{ matrix.os }}.zip ./*
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-            name: build-${{ matrix.os }}
-            path: ./*
+          name: build-${{ matrix.os }}
+          path: ./*
+
+          
+    #   - name: Create archive
+    #     run: |
+    #       mkdir -p artifacts
+    #       zip -r artifacts/build-${{ matrix.os }}.zip ./*
+
+    #   - name: Release artifacts
+    #     if: ${{ github.ref_type == 'tag' }}
+    #     uses: softprops/action-gh-release@v2
+    #     with:
+    #       files: artifacts/*
+    #     env:
+    #       GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
 
