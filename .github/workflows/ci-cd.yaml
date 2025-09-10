@@ -6,30 +6,35 @@ on:
       - 'v*'
 
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-latest, windows-latest]
-            
-        steps:
-            - name: Checkout Repo
-              uses: actions/checkout@v4
-            
-            - name: Set up java
-              uses: actions/setup-java@v5
-              with:
-                distribution: 'oracle'
-                java-version: '21'
-                cache: 'maven'
-            
-            - name: Package using jlink
-              run: mvn javafx:jlink
-            
-            - name: release jar
-              if: ${{ startsWith(github.ref, 'refs/tags/') }}
-              uses: softprops/action-gh-release@v2
-              with:
-                    files: ./target
-                    token: ${{ secrets.TOKEN }}
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'oracle'
+          java-version: '21'
+          cache: 'maven'
+      
+      - name: Package using jlink
+        run: mvn javafx:jlink
 
+      - name: Create archive
+        run: |
+          mkdir -p artifacts
+          zip -r artifacts/build-${{ matrix.os }}.zip ./*
+
+      - name: Release artifacts
+        if: ${{ github.ref_type == 'tag' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
