@@ -26,24 +26,35 @@ jobs:
       - name: Package using jlink
         run: mvn javafx:jlink
 
-      - name: Create archive (Linux)
-        if: runner.os == 'Linux'
-        run: |
-            mkdir -p artifacts
-            zip -r artifacts/build-${{ matrix.os }}.zip target/
+      - name: Setup Go 1.24
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+      
 
-      - name: Create archive (Windows)
-        if: runner.os == 'Windows'
-        run: |
-            mkdir artifacts
-            Get-ChildItem -Path ./target -Exclude artifacts | Compress-Archive -DestinationPath artifacts\build-${{ matrix.os }}.zip
+      - name: Build Executables
+        run: go build
+
+    #   - name: Create archive (Linux)
+    #     if: runner.os == 'Linux'
+    #     run: |
+    #         mkdir -p artifacts
+    #         zip -r artifacts/build-${{ matrix.os }}.zip target/
+
+    #   - name: Create archive (Windows)
+    #     if: runner.os == 'Windows'
+    #     run: |
+    #         mkdir artifacts
+    #         Get-ChildItem -Path ./target -Exclude artifacts | Compress-Archive -DestinationPath artifacts\build-${{ matrix.os }}.zip
 
 
       - name: Release artifacts
         if: ${{ github.ref_type == 'tag' }}
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*
+          files: |
+            build
+            build.exe
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
 
